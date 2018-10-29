@@ -12,7 +12,7 @@ class App extends React.Component {
   public render() {
     return (
       <div className="App">
-        <p>test</p>
+        <p>testtest</p>
       </div>
     );
   }
@@ -21,13 +21,15 @@ class App extends React.Component {
     const context = new AudioContext();
     const res: Response = await fetch('clip.mp3');
     const source = context.createBufferSource();
+    const gain = new GainNode(context);
 
     source.buffer = await context.decodeAudioData(await res.arrayBuffer());
-    
-    source.connect(context.destination);
+    source.connect(gain);
+    gain.connect(context.destination);
+    // source.connect(context.destination);
 
-    // source.start(0);
-    // source.stop(3);
+    source.start(0);
+    source.stop(3);
   }
 }
 

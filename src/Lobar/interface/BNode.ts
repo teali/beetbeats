@@ -1,3 +1,3 @@
-export interface BNode {
-    name: string;
+export abstract class BNode {
+    public name: string;
 }
