@@ -1,3 +1,5 @@
 export abstract class BNode {
-    public name: string;
+    
+    constructor (public name: string) {
+    }
 }
