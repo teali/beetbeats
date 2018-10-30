@@ -1,4 +1,4 @@
 
-class Lobar {
+export class Lobar {
     
 }
