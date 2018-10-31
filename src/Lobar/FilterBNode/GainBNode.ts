@@ -12,4 +12,8 @@ export class GainBNode extends FilterBNode {
     public setGain(value: number) {
         this.node.gain.setValueAtTime(value, this.bar.ctx.currentTime);
     }
+
+    public getGain(): number {
+        return this.node.gain.value;
+    }
 }

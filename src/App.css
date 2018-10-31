@@ -22,6 +22,12 @@
   font-size: large;
 }
 
+.rc-slider {
+  width: 80% !important;
+  margin-left:100px;
+  margin-top: 100px;
+}
+
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
