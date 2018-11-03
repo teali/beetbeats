@@ -1,7 +1,7 @@
 // tslint:disable:no-console
 
 import * as React from 'react';
-import Slider from 'rc-slider';
+import Slider, { SliderProps } from 'rc-slider';
 
 import './App.css';
 import 'rc-slider/assets/index.css';
@@ -12,12 +12,11 @@ import { LowPassBNode } from './Lobar/FilterBNode/LowPassBNode';
 import { FileSrcBNode } from './Lobar/SrcBNode/FileSrcBNode';
 import { HighPassBNode } from './Lobar/FilterBNode/HighPassBNode';
 import { PeakingBNode } from './Lobar/FilterBNode/PeakingBNode';
-
-
+import { TestBNode } from './Lobar/FilterBNode/TestBNode';
 
 class App extends React.Component {
   private slideA:((value: number) => void)|undefined;
-
+  private slideB:((value: number) => void)|undefined; 
   constructor(props: object) {
     super(props);
     this.audioTest();
@@ -34,23 +33,23 @@ class App extends React.Component {
   }
 
   private async audioTest () {
-
-
-
     const bar = new BRack();
+    await bar.setupFilters();
     const srcNode = new FileSrcBNode('song', bar);
     const gainNode = new GainBNode('gain', bar);
     const lowpass = new LowPassBNode('lowpass', bar);
     const gain2Node = new GainBNode('gain2', bar);
     const peaking = new PeakingBNode('peaking', bar);
     const destNode = new PlaybackDestBNode('dest', bar);
-
+    const gainWorkletNode = new TestBNode('gain-test', bar);
+    
     this.slideA = (value: number) => {
       lowpass.setFreq(value);
     }
-
+    this.forceUpdate();
+    console.log("reached");
     srcNode.setFile('clip.mp3');
-    gainNode.setGain(0.5);
+    gainNode.setGain(0.0);
     lowpass.setFreq(1500);
     lowpass.setPeak(8);
     peaking.setFreq(1500);
@@ -60,9 +59,32 @@ class App extends React.Component {
     srcNode.connectTo(gainNode);
 
     gainNode.connectTo(lowpass);
-    lowpass.connectTo(destNode);
+    lowpass.connectTo(gainWorkletNode);
+    gainWorkletNode.connectTo(destNode);
     
     srcNode.start();
+
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    const bufferLength = analyser.frequencyBinCount;
+    const sampleArray = new Float32Array(bufferLength);
+
+    for (let i = 0; i < bufferLength; i++) {
+      sampleArray[i] = Math.random()*2-1;
+    }
+
+    // analyser.getByteFrequencyData
+    console.log(ctx.sampleRate);
+
+    const myArrayBuffer = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
+
+    const nowBuffering = myArrayBuffer.getChannelData(0);
+    for (let i = 0; i < myArrayBuffer.length; i++) {
+      nowBuffering[i] = Math.random() * 2 - 1;
+    }
+
+    
   }
 }
 

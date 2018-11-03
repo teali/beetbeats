@@ -4,5 +4,11 @@ export class BRack {
 
     constructor() {
         this.ctx = new AudioContext();
+
+    }
+
+    public async setupFilters() {
+        await this.ctx.audioWorklet.addModule('/processor/testprocessor.js');
+
     }
 }
