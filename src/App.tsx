@@ -13,6 +13,9 @@ import { FileSrcBNode } from './Lobar/SrcBNode/FileSrcBNode';
 import { HighPassBNode } from './Lobar/FilterBNode/HighPassBNode';
 import { PeakingBNode } from './Lobar/FilterBNode/PeakingBNode';
 import { TestBNode } from './Lobar/FilterBNode/TestBNode';
+import { FFT } from './Lobar/Util/fft';
+import ooura from 'ooura';
+import { Chart } from "chart.js";
 
 class App extends React.Component {
   private slideA:((value: number) => void)|undefined;
@@ -20,14 +23,16 @@ class App extends React.Component {
   constructor(props: object) {
     super(props);
     this.audioTest();
+    
   }
 
   public render() {
     const slider = <Slider className="slider" onChange={this.slideA} max={2000} min={100} step={1} defaultValue={1500} />;
-
+    
     return (
       <div className="App">
         {slider}
+        <canvas id="myChart" width="800" height="500" />
       </div>
     );
   }
@@ -42,6 +47,49 @@ class App extends React.Component {
     const peaking = new PeakingBNode('peaking', bar);
     const destNode = new PlaybackDestBNode('dest', bar);
     const gainWorkletNode = new TestBNode('gain-test', bar);
+
+    const input = new Float64Array(1024);
+
+    for (let i = 0; i < 1024; i++) {
+      input[i] = Math.cos(i) + Math.sin(i*2);
+    }
+
+    const fft = new FFT(1024);
+    window['FFT'] = FFT;
+    const out = fft.dft(input);
+
+    const graph: any = document.getElementById("myChart");
+
+    if (graph) {
+      const labelss = [];
+      for (let i = 0; i <512; i++) {
+        labelss.push(i.toString());
+      }
+      const ctx = graph.getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labelss,
+          datasets: [{
+            label: 'fftTest',
+            data: Array.from(out)
+          }]
+        },
+        options: {
+          scales: {
+            xAxes: [{
+              display: true
+            }],
+             yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+          }
+        }
+      })
+    }
+    
     
     this.slideA = (value: number) => {
       lowpass.setFreq(value);
@@ -49,7 +97,7 @@ class App extends React.Component {
     this.forceUpdate();
     console.log("reached");
     srcNode.setFile('clip.mp3');
-    gainNode.setGain(0.0);
+    gainNode.setGain(0.4);
     lowpass.setFreq(1500);
     lowpass.setPeak(8);
     peaking.setFreq(1500);
@@ -58,33 +106,12 @@ class App extends React.Component {
 
     srcNode.connectTo(gainNode);
 
-    gainNode.connectTo(lowpass);
-    lowpass.connectTo(gainWorkletNode);
+    gainNode.connectTo(gainWorkletNode);
     gainWorkletNode.connectTo(destNode);
     
     srcNode.start();
-
-    const ctx = new AudioContext();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 1024;
-    const bufferLength = analyser.frequencyBinCount;
-    const sampleArray = new Float32Array(bufferLength);
-
-    for (let i = 0; i < bufferLength; i++) {
-      sampleArray[i] = Math.random()*2-1;
-    }
-
-    // analyser.getByteFrequencyData
-    console.log(ctx.sampleRate);
-
-    const myArrayBuffer = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
-
-    const nowBuffering = myArrayBuffer.getChannelData(0);
-    for (let i = 0; i < myArrayBuffer.length; i++) {
-      nowBuffering[i] = Math.random() * 2 - 1;
-    }
-
     
+
   }
 }
 
